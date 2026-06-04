@@ -18,8 +18,8 @@
     --red: #ef4444;
     --purple: #a78bfa;
     --text: #e2e8f0;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
+    --text-muted: #94a3b8;
+    --text-dim: #cbd5e1;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -541,7 +541,7 @@
     }
 
     /* 지도 레이아웃 */
-    #kakaoMapContainer { height: 350px; }
+    #kakaoMapContainer { height: 400px; }
     .page #page-map > .panel > div[style*="grid-template-columns:1fr 320px"] {
       grid-template-columns: 1fr !important;
     }
@@ -565,7 +565,7 @@
   </div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="showPage('dashboard')">📊 <span>대시보드</span></button>
-    <button class="nav-tab" onclick="showPage('customers')">🏭 <span>고객사</span></button>
+    <button class="nav-tab" onclick="showPage('customers')">📈 <span>영업진척현황</span></button>
     <button class="nav-tab" onclick="showPage('activity')">✏️ <span>영업입력</span></button>
     <button class="nav-tab" onclick="showPage('collect')">🔍 <span>정보수집</span></button>
     <button class="nav-tab" onclick="showPage('map')">🗺️ <span>지도</span></button>
@@ -862,7 +862,7 @@
       <input class="form-input" id="kakaoAppKey" style="display:none;">
     </div>
     <!-- 지도 + 현장등록 2단 레이아웃 -->
-    <div style="display:grid; grid-template-columns:1fr 320px; gap:12px; align-items:start;" id="mapLayout">
+    <div style="display:grid; grid-template-columns:1fr 320px; gap:12px; align-items:start; transition:all 0.3s;" id="mapLayout">
       <div id="kakaoMapContainer" style="width:100%; height:620px; border-radius:8px; overflow:hidden; background:var(--surface2); display:flex; align-items:center; justify-content:center;">
         <div style="color:var(--text-muted); font-size:13px;">카카오 앱키를 입력하면 지도가 표시됩니다.</div>
       </div>
@@ -1590,15 +1590,18 @@ function plotCustomers() {
         <div style="
           background:${color};
           color:#fff;
-          padding:4px 8px;
+          padding:6px 12px;
           border-radius:20px;
-          font-size:11px;
+          font-size:13px;
           font-weight:700;
           font-family:'Noto Sans KR',sans-serif;
           white-space:nowrap;
-          box-shadow:0 2px 8px rgba(0,0,0,0.3);
+          box-shadow:0 3px 12px rgba(0,0,0,0.4);
           cursor:pointer;
-          border:2px solid rgba(255,255,255,0.3);
+          border:2px solid rgba(255,255,255,0.5);
+          max-width:160px;
+          overflow:hidden;
+          text-overflow:ellipsis;
         ">${c.name}</div>`;
 
       const marker = new kakao.maps.CustomOverlay({
