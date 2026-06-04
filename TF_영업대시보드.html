@@ -570,6 +570,23 @@
     </div>
   </div>
 
+  <!-- TF별 현황 -->
+  <div class="grid-2" style="margin-bottom:12px;">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">👥 TF별 영업현황</span>
+      </div>
+      <div id="tfSummary" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🏆 주요 타겟 현황</span>
+        <span style="font-size:10px; color:var(--text-muted);">수주가능성 상위</span>
+      </div>
+      <div id="topTargets" style="display:flex; flex-direction:column; gap:6px;"></div>
+    </div>
+  </div>
+
   <div class="panel">
     <div class="panel-header">
       <span class="panel-title">⚡ 최근 영업활동</span>
@@ -592,10 +609,10 @@
     </select>
     <select class="filter-select" id="filterRegion" onchange="renderCustomerTable()">
       <option value="">전체 지역</option>
-      <option>김포</option>
-      <option>인천</option>
-      <option>부천</option>
-      <option>광명</option>
+      <option>강남</option><option>강서</option><option>구로</option>
+      <option>계양</option><option>김포</option><option>동작</option>
+      <option>서초</option><option>영등포</option><option>부천</option>
+      <option>부평</option><option>인천</option>
     </select>
     <button class="btn btn-primary" onclick="openAddModal()">+ 고객사 추가</button>
   </div>
@@ -603,9 +620,9 @@
     <table class="data-table" id="customerTable">
       <thead>
         <tr>
+          <th style="width:24px;"></th>
           <th>업체명</th>
           <th>지역</th>
-          <th>창고유형</th>
           <th>담당TF</th>
           <th>현재택배사</th>
           <th>접촉상태</th>
@@ -685,19 +702,18 @@
 <!-- ===== 정보수집 ===== -->
 <div class="page" id="page-collect">
 
-  <!-- API 설정 -->
-  <div class="panel" style="margin-bottom:12px;">
-    <div class="panel-header">
-      <span class="panel-title">⚙️ API 설정</span>
-      <span id="apiStatusBadge" class="panel-badge" style="background:rgba(239,68,68,0.15); color:var(--red);">미설정</span>
-    </div>
-    <div style="display:flex; gap:8px; align-items:center;">
-      <input class="form-input" type="password" id="apiKeyInput" placeholder="일반 인증키 (Decoding 키) 입력" style="flex:1;">
-      <button class="btn btn-primary" onclick="saveApiKey()">저장</button>
-      <button class="btn btn-secondary" onclick="toggleKeyVisible()">보기</button>
-    </div>
-    <div style="margin-top:8px; font-size:11px; color:var(--text-muted);">
-      💡 공공데이터포털 마이페이지 → 활용신청 → <b style="color:var(--accent2)">일반 인증키</b> 사용 · 키는 이 브라우저에만 저장됩니다.
+  <!-- API 설정 (숨김) -->
+  <div id="apiSettingPanel" style="display:none;">
+    <div class="panel" style="margin-bottom:12px;">
+      <div class="panel-header">
+        <span class="panel-title">⚙️ API 설정</span>
+        <span id="apiStatusBadge" class="panel-badge" style="background:rgba(34,197,94,0.15); color:var(--green);">자동설정</span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input class="form-input" type="password" id="apiKeyInput" placeholder="일반 인증키" style="flex:1;">
+        <button class="btn btn-primary" onclick="saveApiKey()">저장</button>
+        <button class="btn btn-secondary" onclick="toggleKeyVisible()">보기</button>
+      </div>
     </div>
   </div>
 
@@ -789,16 +805,9 @@
       </div>
       <span id="mapPinCount" style="margin-left:auto; font-size:11px; color:var(--accent2); font-weight:600;"></span>
     </div>
-    <!-- 카카오맵 앱키 입력 -->
-    <div id="kakaoKeyPanel" style="margin-bottom:10px; padding:10px; background:var(--surface2); border-radius:8px; border:1px solid var(--border);">
-      <div style="font-size:11px; color:var(--yellow); font-weight:600; margin-bottom:6px;">⚠️ 카카오맵 API 키 필요</div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input class="form-input" id="kakaoAppKey" placeholder="카카오 앱키 (JavaScript 키) 입력" style="flex:1;">
-        <button class="btn btn-primary" onclick="initKakaoMap()">지도 로드</button>
-      </div>
-      <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">
-        💡 <a href="https://developers.kakao.com" target="_blank" style="color:var(--accent2);">developers.kakao.com</a> → 앱 생성 → JavaScript 키 사용 (무료)
-      </div>
+    <!-- 카카오맵 앱키 (숨김 자동로드) -->
+    <div id="kakaoKeyPanel" style="display:none;">
+      <input class="form-input" id="kakaoAppKey" style="display:none;">
     </div>
     <!-- 지도 + 현장등록 2단 레이아웃 -->
     <div style="display:grid; grid-template-columns:1fr 320px; gap:12px; align-items:start;">
@@ -868,6 +877,85 @@
         </div>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 고객사 상세 모달 -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <span class="modal-title" id="detail-title">고객사 상세</span>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+
+    <!-- 기본정보 -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--border);">
+      <div>
+        <div class="form-label" style="margin-bottom:3px;">주소</div>
+        <div id="detail-addr" style="font-size:12px; color:var(--text-dim);"></div>
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:3px;">연락처</div>
+        <div id="detail-tel" style="font-size:12px; color:var(--text-dim);"></div>
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:3px;">담당 TF</div>
+        <div id="detail-tf" style="font-size:12px; color:var(--text-dim);"></div>
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:3px;">접촉상태</div>
+        <div id="detail-status" style="font-size:12px;"></div>
+      </div>
+    </div>
+
+    <!-- 영업 핵심정보 입력 -->
+    <div style="font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">📊 영업 핵심정보</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div class="form-group">
+        <label class="form-label">현재 택배사</label>
+        <select class="form-select" id="detail-courier">
+          <option>미확인</option><option>CJ대한통운</option><option>한진</option>
+          <option>롯데</option><option>로젠</option><option>우체국</option><option>기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">월 평균 물량 (박스)</label>
+        <input class="form-input" id="detail-volume" type="number" placeholder="예: 15000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">현재 택배 단가 (원)</label>
+        <input class="form-input" id="detail-price" type="number" placeholder="예: 2800">
+      </div>
+      <div class="form-group">
+        <label class="form-label">월 예상 매출 (만원)</label>
+        <input class="form-input" id="detail-revenue" placeholder="자동계산 또는 직접입력">
+      </div>
+      <div class="form-group">
+        <label class="form-label">주요 상품군</label>
+        <input class="form-input" id="detail-product" placeholder="예: 가전, 식품, 의류">
+      </div>
+      <div class="form-group">
+        <label class="form-label">수주가능성</label>
+        <select class="form-select" id="detail-prob">
+          <option>미평가</option><option>상</option><option>중</option><option>하</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 영업 메모 -->
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">영업 메모</label>
+      <textarea class="form-textarea" id="detail-memo" placeholder="담당자 반응, 특이사항, 계약 조건 등..." style="min-height:80px;"></textarea>
+    </div>
+
+    <!-- 활동 이력 -->
+    <div style="font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">📋 영업활동 이력</div>
+    <div id="detail-activity-log" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
+
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">닫기</button>
+      <button class="btn btn-primary" onclick="saveDetailInfo()">저장</button>
     </div>
   </div>
 </div>
@@ -1046,6 +1134,73 @@ function renderDashboard() {
       </div>`;
   });
 
+  // TF별 현황 - 스택바 차트
+  const tfNames = [...new Set(customers.map(c => c.tf).filter(Boolean))];
+  const tfEl = document.getElementById('tfSummary');
+  const stageColors = { '미접촉':'#475569', '접촉중':'#0ea5e9', '협의중':'#f59e0b', '수주완료':'#22c55e' };
+  const tfStages = ['미접촉','접촉중','협의중','수주완료'];
+
+  if (tfNames.length) {
+    tfEl.innerHTML = `
+      <!-- 범례 -->
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+        ${tfStages.map(s => `
+          <div style="display:flex; align-items:center; gap:4px;">
+            <div style="width:10px; height:10px; border-radius:2px; background:${stageColors[s]};"></div>
+            <span style="font-size:10px; color:var(--text-muted);">${s}</span>
+          </div>`).join('')}
+      </div>
+      <!-- TF별 바 -->
+      ${tfNames.map(tf => {
+        const tfCusts = customers.filter(c => c.tf === tf);
+        const total = tfCusts.length;
+        if (!total) return '';
+        const cnts = {};
+        tfStages.forEach(s => cnts[s] = tfCusts.filter(c => c.status === s).length);
+        const tfLastActs = activities.filter(a => a.who === tf).sort((a,b) => b.ts - a.ts).slice(0,1);
+
+        return `
+          <div style="margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-weight:700; font-size:12px; color:var(--text);">${tf}</span>
+              <span style="font-size:10px; color:var(--text-muted);">총 ${total}건</span>
+            </div>
+            <!-- 숫자 레이블 -->
+            <div style="display:flex; margin-bottom:3px;">
+              ${tfStages.map(s => {
+                const pct = Math.round(cnts[s]/total*100);
+                return cnts[s] ? `<div style="width:${pct}%; text-align:center; font-size:9px; font-weight:700; color:${stageColors[s]};">${cnts[s]}</div>` : '';
+              }).join('')}
+            </div>
+            <!-- 스택 바 -->
+            <div style="display:flex; height:18px; border-radius:6px; overflow:hidden; background:var(--border);">
+              ${tfStages.map(s => {
+                const pct = Math.round(cnts[s]/total*100);
+                return cnts[s] ? `<div style="width:${pct}%; background:${stageColors[s]}; transition:width 0.6s; position:relative;" title="${s}: ${cnts[s]}건"></div>` : '';
+              }).join('')}
+            </div>
+            ${tfLastActs.length ? `<div style="font-size:10px; color:var(--text-muted); margin-top:4px;">최근활동: <b style="color:var(--text)">${tfLastActs[0].company}</b> · ${tfLastActs[0].date}</div>` : ''}
+          </div>`;
+      }).join('')}`;
+  } else {
+    tfEl.innerHTML = '<div style="color:var(--text-muted); font-size:11px; padding:10px;">담당 TF 배정 후 표시됩니다.</div>';
+  }
+
+  // 주요 타겟 (수주가능성 상, 협의중/접촉중)
+  const topEl = document.getElementById('topTargets');
+  const tops = customers
+    .filter(c => c.prob === '상' && c.status !== '수주완료')
+    .sort((a,b) => (b.volume||0) - (a.volume||0))
+    .slice(0, 5);
+  topEl.innerHTML = tops.length ? tops.map(c => `
+    <div style="display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface2); border-radius:7px; cursor:pointer;" onclick="showPage('customers'); setTimeout(()=>openDetailModal(${c.id}),100)">
+      <div style="flex:1;">
+        <div style="font-weight:600; font-size:12px; color:var(--text);">${c.name}</div>
+        <div style="font-size:10px; color:var(--text-muted);">${c.region} · ${c.tf||'미배정'} ${c.volume ? '· '+Number(c.volume).toLocaleString()+'박스/월' : ''}</div>
+      </div>
+      <span class="status-pill s-${c.status}">${c.status}</span>
+    </div>`).join('') : '<div style="color:var(--text-muted); font-size:11px; padding:10px;">수주가능성 "상" 등록 후 표시됩니다.</div>';
+
   // Activity feed
   const feed = document.getElementById('activityFeed');
   const sorted = [...activities].sort((a,b) => b.ts - a.ts).slice(0, 8);
@@ -1092,24 +1247,104 @@ function renderCustomerTable() {
 
   const probClass = { '상':'prob-high', '중':'prob-mid', '하':'prob-low', '미평가':'prob-low' };
   const tbody = document.getElementById('customerTbody');
-  tbody.innerHTML = list.map(c => `
-    <tr>
-      <td style="font-weight:600; color:var(--text)">${c.name} ${c.churn==='Y'?'<span style="color:var(--red); font-size:10px;">[이탈]</span>':''}</td>
-      <td>${c.region}</td>
-      <td style="color:var(--text-muted)">${c.type}</td>
+  tbody.innerHTML = list.map(c => {
+    const lastAct = activities.filter(a => a.company === c.name).sort((a,b) => b.ts - a.ts)[0];
+    return `
+    <tr style="cursor:pointer;" onclick="openDetailModal(${c.id})">
+      <td style="color:var(--text-muted); font-size:14px; text-align:center;">›</td>
+      <td>
+        <div style="font-weight:600; color:var(--text);">${c.name} ${c.churn==='Y'?'<span style="color:var(--red); font-size:10px;">[이탈]</span>':''}</div>
+        ${c.volume ? `<div style="font-size:10px; color:var(--text-muted);">${Number(c.volume).toLocaleString()}박스/월 · ${c.product||''}</div>` : ''}
+      </td>
+      <td style="color:var(--text-muted);">${c.region}</td>
       <td>${c.tf||'-'}</td>
-      <td style="color:var(--text-muted)">${c.courier||'-'}</td>
+      <td style="color:var(--text-muted);">${c.courier||'-'}</td>
       <td><span class="status-pill s-${c.status}">${c.status}</span></td>
       <td><span class="${probClass[c.prob]||'prob-low'}">${c.prob}</span></td>
       <td style="color:var(--text-muted); font-family:'DM Mono',monospace; font-size:11px;">${c.lastContact||'-'}</td>
-      <td><button class="btn btn-danger" style="padding:3px 8px; font-size:10px;" onclick="deleteCustomer(${c.id})">삭제</button></td>
-    </tr>`).join('') || `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">검색 결과가 없습니다.</td></tr>`;
+      <td onclick="event.stopPropagation()"><button class="btn btn-danger" style="padding:3px 8px; font-size:10px;" onclick="deleteCustomer(${c.id})">삭제</button></td>
+    </tr>
+    ${lastAct ? `<tr id="memo-row-${c.id}" style="display:none;"><td colspan="9" style="padding:0 10px 10px 40px; background:var(--surface2);"><div style="font-size:11px; color:var(--text-muted); padding:8px; border-left:3px solid var(--accent); border-radius:4px;">💬 최근메모: ${lastAct.memo||'없음'}</div></td></tr>` : ''}`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">검색 결과가 없습니다.</td></tr>`;
 
   // update activity company select
   const sel = document.getElementById('act-company');
   const prev = sel.value;
   sel.innerHTML = '<option value="">고객사 선택...</option>' + customers.map(c => `<option>${c.name}</option>`).join('');
   if (prev) sel.value = prev;
+}
+
+// 상세 모달
+let currentDetailId = null;
+
+function openDetailModal(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  currentDetailId = id;
+
+  document.getElementById('detail-title').textContent = c.name;
+  document.getElementById('detail-addr').textContent = c.addr || '-';
+  document.getElementById('detail-tel').textContent = c.tel || '-';
+  document.getElementById('detail-tf').textContent = c.tf || '-';
+  document.getElementById('detail-status').innerHTML = `<span class="status-pill s-${c.status}">${c.status}</span>`;
+
+  document.getElementById('detail-courier').value = c.courier || '미확인';
+  document.getElementById('detail-volume').value = c.volume || '';
+  document.getElementById('detail-price').value = c.price || '';
+  document.getElementById('detail-revenue').value = c.revenue || '';
+  document.getElementById('detail-product').value = c.product || '';
+  document.getElementById('detail-prob').value = c.prob || '미평가';
+  document.getElementById('detail-memo').value = c.salesMemo || '';
+
+  // 물량x단가 자동계산
+  document.getElementById('detail-volume').oninput = calcRevenue;
+  document.getElementById('detail-price').oninput = calcRevenue;
+
+  // 활동 이력
+  const logs = activities.filter(a => a.company === c.name).sort((a,b) => b.ts - a.ts);
+  const logEl = document.getElementById('detail-activity-log');
+  logEl.innerHTML = logs.length ? logs.map(a => `
+    <div style="background:var(--surface2); border-radius:6px; padding:8px 10px; border-left:3px solid var(--accent);">
+      <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+        <span style="font-weight:600; font-size:11px; color:var(--text);">${a.who} · ${a.method}</span>
+        <span style="font-size:10px; color:var(--text-muted); font-family:'DM Mono',monospace;">${a.date}</span>
+      </div>
+      <div style="font-size:11px; color:var(--text-muted);">${a.memo || '메모 없음'}</div>
+      ${a.next ? `<div style="font-size:10px; color:var(--accent2); margin-top:3px;">→ 다음: ${a.next}</div>` : ''}
+      <span class="status-pill s-${a.status}" style="margin-top:4px; display:inline-block;">${a.status}</span>
+    </div>`).join('') : '<div style="color:var(--text-muted); font-size:11px; padding:8px;">활동 이력이 없습니다.</div>';
+
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function calcRevenue() {
+  const vol = parseFloat(document.getElementById('detail-volume').value) || 0;
+  const price = parseFloat(document.getElementById('detail-price').value) || 0;
+  if (vol && price) {
+    const monthly = Math.round(vol * price / 10000);
+    document.getElementById('detail-revenue').value = monthly;
+  }
+}
+
+function saveDetailInfo() {
+  const c = customers.find(x => x.id === currentDetailId);
+  if (!c) return;
+  c.courier = document.getElementById('detail-courier').value;
+  c.volume = document.getElementById('detail-volume').value;
+  c.price = document.getElementById('detail-price').value;
+  c.revenue = document.getElementById('detail-revenue').value;
+  c.product = document.getElementById('detail-product').value;
+  c.prob = document.getElementById('detail-prob').value;
+  c.salesMemo = document.getElementById('detail-memo').value;
+  save();
+  closeDetailModal();
+  renderCustomerTable();
+  showToast('저장됐어요!');
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  currentDetailId = null;
 }
 
 function deleteCustomer(id) {
@@ -1383,9 +1618,11 @@ function refreshMap() {
   const savedKey = localStorage.getItem('kakao_app_key');
   if (savedKey) {
     document.getElementById('kakaoAppKey').value = savedKey;
-  }
-  if (kakaoMap) {
-    plotCustomers();
+    if (!kakaoMap) {
+      initKakaoMap();
+    } else {
+      plotCustomers();
+    }
   }
   renderFieldLog();
 }
@@ -1419,7 +1656,28 @@ function updateApiStatus() {
 
 // ── COLLECTOR ──────────────────────────────────
 // 자사물류 제외 키워드
-const EXCLUDE_KEYWORDS = ['쿠팡','네이버','마켓컬리','롯데','신세계','SSG','CJ대한통운','우체국','한진택배','한진','로젠','현대글로비스','삼성SDS','GS리테일','이마트','홈플러스','CJ ENM','CJ올리브','BGF','GS25','CU물류'];
+const EXCLUDE_KEYWORDS = [
+  // CJ 계열
+  '씨제이대한통운','CJ대한통운','대한통운','CJ로지스',
+  'CJ ENM','CJ제일제당','CJ프레시웨이','CJ올리브','CJ푸드빌',
+  // 한진 계열 - "주식회사 한진" 도 걸리게
+  '한진택배','한진물류','한진','HANJIN',
+  // 롯데 계열 - "롯데글로벌로지스 주식회사" 도 걸리게
+  '롯데글로벌로지스','롯데글로벌','롯데로지스','롯데택배','롯데',
+  // 로젠 계열
+  '로젠택배','로젠','LOGEN',
+  // 쿠팡 계열 - "쿠팡로지스틱스서비스", "쿠팡풀필먼트서비스" 모두 걸리게
+  '쿠팡로지스틱스서비스','쿠팡로지스틱스','쿠팡풀필먼트서비스','쿠팡풀필먼트','쿠팡','COUPANG',
+  // 우체국/우정
+  '우체국','우정사업','우편물류',
+  // 이커머스 자사물류
+  '네이버풀필먼트','마켓컬리','SSG닷컴','신세계물류','이마트물류','홈플러스물류',
+  '올리브영','GS리테일','GS25',
+  // 대형 물류사
+  '현대글로비스','삼성SDS','범한판토스','판토스','LG CNS',
+  // BGF
+  'BGF로지스','BGF',
+];
 
 // 지역 → 주소 검색어 매핑
 const REGION_ADDR = {
@@ -1491,8 +1749,12 @@ async function runCollector() {
     totalCount = parseInt(data?.response?.body?.totalCount || 0);
     const arr = Array.isArray(items) ? items : [items];
 
-    collectResults = arr.map(parseItem);
-    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (전체 ${totalCount}건)`;
+    const rawResults = arr.map(parseItem);
+    // 자동으로 대형사 제외
+    collectResults = rawResults.filter(r => !EXCLUDE_KEYWORDS.some(k => r.name.includes(k)));
+    allCollectResults = collectResults;
+    const excluded = rawResults.length - collectResults.length;
+    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (대형사 ${excluded}건 자동제외)`;
     document.getElementById('collectPageInfo').textContent = `1페이지 / 약 ${Math.ceil(totalCount/100)}페이지`;
     document.getElementById('addAllBtn').style.display = 'inline-block';
     document.getElementById('corsGuide').style.display = 'none';
@@ -1529,11 +1791,13 @@ async function runCollectorAll() {
       const d = await callWarehouseAPI(p);
       const its = d?.response?.body?.items?.item || [];
       const arr = Array.isArray(its) ? its : [its];
-      collectResults.push(...arr.map(parseItem));
+      const rawPage = arr.map(parseItem).filter(r => !EXCLUDE_KEYWORDS.some(k => r.name.includes(k)));
+      collectResults.push(...rawPage);
       await new Promise(r => setTimeout(r, 200)); // rate limit
     }
 
-    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (전체 ${total}건)`;
+    allCollectResults = collectResults;
+    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (대형사 자동제외)`;
     document.getElementById('addAllBtn').style.display = 'inline-block';
     renderCollectTable();
   } catch(e) {
@@ -1727,6 +1991,18 @@ function initDate() {
 }
 
 // ── INIT ───────────────────────────────────────
+// 키 자동 복호화 및 로드
+(function() {
+  function dk(e) {
+    return atob(atob(e));
+  }
+  const ak = dk("TVdWaFkyUmtPVFJsWkRFME9URTJaR0kxT0dRek16bGpZemRqT0RObFkyUXdNR05sTkRWbVlXTXlOVFJoWVdRd01qRTBNelptTWpGaFpqWmxZV1k9");
+  const kk = dk("TVdVeVpXSTBabVkwWkRBNVpXSTNNakkxWXpKaU1qUXlNekU1TmpKbFlqaz0=");
+  if (!localStorage.getItem('tf_api_key')) localStorage.setItem('tf_api_key', ak);
+  if (!localStorage.getItem('kakao_app_key')) localStorage.setItem('kakao_app_key', kk);
+  API_KEY = localStorage.getItem('tf_api_key');
+})();
+
 initDate();
 renderDashboard();
 renderCustomerTable();
