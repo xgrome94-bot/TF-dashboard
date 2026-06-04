@@ -555,6 +555,9 @@
     .modal .form-grid { grid-template-columns: 1fr; }
   }
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -1109,6 +1112,51 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ── FIREBASE ───────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCp-63wWN1yjpsZxWiAZuy9iM9DJIwwGu4",
+  authDomain: "tf-dashboard-95a71.firebaseapp.com",
+  databaseURL: "https://tf-dashboard-95a71-default-rtdb.firebaseio.com",
+  projectId: "tf-dashboard-95a71",
+  storageBucket: "tf-dashboard-95a71.firebasestorage.app",
+  messagingSenderId: "325496486828",
+  appId: "1:325496486828:web:d94826400576377824d809"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Firebase 실시간 동기화
+function syncFromFirebase() {
+  db.ref('customers').on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      customers = Object.values(data);
+      renderCustomerTable();
+      renderDashboard();
+    }
+  });
+  db.ref('activities').on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      activities = Object.values(data);
+      renderDashboard();
+    }
+  });
+}
+
+function saveToFirebase() {
+  // customers 저장
+  const custObj = {};
+  customers.forEach(c => { custObj['c' + c.id] = c; });
+  db.ref('customers').set(custObj);
+
+  // activities 저장
+  const actObj = {};
+  activities.forEach((a, i) => { actObj['a' + i] = a; });
+  db.ref('activities').set(actObj);
+}
+
 // ── STATE ──────────────────────────────────────
 let customers = JSON.parse(localStorage.getItem('tf_customers') || '[]');
 let activities = JSON.parse(localStorage.getItem('tf_activities') || '[]');
@@ -1138,6 +1186,8 @@ if (activities.length === 0) {
 function save() {
   localStorage.setItem('tf_customers', JSON.stringify(customers));
   localStorage.setItem('tf_activities', JSON.stringify(activities));
+  // Firebase에도 저장
+  try { saveToFirebase(); } catch(e) { console.warn('Firebase sync error:', e); }
 }
 
 // ── NAV ────────────────────────────────────────
@@ -2171,6 +2221,14 @@ initDate();
 renderDashboard();
 renderCustomerTable();
 updateApiStatus();
+
+// Firebase 실시간 동기화 시작
+try {
+  syncFromFirebase();
+  console.log('Firebase 연동 완료!');
+} catch(e) {
+  console.warn('Firebase 연동 실패, 로컬 데이터 사용:', e);
+}
 
 // 모바일 지도 레이아웃 대응
 function adjustMapLayout() {
