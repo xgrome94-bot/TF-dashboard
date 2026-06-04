@@ -1011,6 +1011,28 @@
       <textarea class="form-textarea" id="detail-memo" placeholder="담당자 반응, 특이사항, 계약 조건 등..." style="min-height:80px;"></textarea>
     </div>
 
+    <!-- 오늘 활동 빠른 입력 -->
+    <div style="background:rgba(14,165,233,0.08); border:1px solid rgba(14,165,233,0.2); border-radius:8px; padding:12px; margin-bottom:14px;">
+      <div style="font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;">⚡ 오늘 활동 추가</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+        <div class="form-group">
+          <label class="form-label">접촉방법</label>
+          <select class="form-select" id="detail-act-method">
+            <option>전화</option><option>방문</option><option>이메일</option><option>소개</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">다음 액션</label>
+          <input class="form-input" id="detail-act-next" placeholder="예: 다음주 방문">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label class="form-label">활동 내용</label>
+        <textarea class="form-textarea" id="detail-act-memo" placeholder="오늘 활동 내용 입력..." style="min-height:60px;"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addActivityFromDetail()" style="width:100%; font-size:12px;">+ 활동 이력 추가</button>
+    </div>
+
     <!-- 활동 이력 -->
     <div style="font-size:11px; font-weight:700; color:var(--accent2); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">📋 영업활동 이력</div>
     <div id="detail-activity-log" style="max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:14px;"></div>
@@ -1402,10 +1424,63 @@ function saveDetailInfo() {
   c.product = document.getElementById('detail-product').value;
   c.prob = document.getElementById('detail-prob').value;
   c.salesMemo = document.getElementById('detail-memo').value;
+  c.lastContact = new Date().toISOString().slice(0,10);
   save();
   closeDetailModal();
   renderCustomerTable();
+  renderDashboard();
   showToast('저장됐어요!');
+}
+
+function addActivityFromDetail() {
+  const c = customers.find(x => x.id === currentDetailId);
+  if (!c) return;
+  const memo = document.getElementById('detail-act-memo').value.trim();
+  if (!memo) { alert('활동 내용을 입력하세요.'); return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  const who = c.tf || '미배정';
+  const status = document.getElementById('detail-status-select').value;
+  const method = document.getElementById('detail-act-method').value;
+  const next = document.getElementById('detail-act-next').value;
+
+  activities.push({
+    date: today,
+    who,
+    company: c.name,
+    method,
+    status,
+    next,
+    memo,
+    ts: Date.now()
+  });
+
+  // 고객사 상태 + 최근접촉일 업데이트
+  c.status = status;
+  c.lastContact = today;
+  save();
+
+  // 입력 초기화
+  document.getElementById('detail-act-memo').value = '';
+  document.getElementById('detail-act-next').value = '';
+
+  // 활동 이력 새로고침
+  const logs = activities.filter(a => a.company === c.name).sort((a,b) => b.ts - a.ts);
+  const logEl = document.getElementById('detail-activity-log');
+  logEl.innerHTML = logs.map(function(a) {
+    return '<div style="background:var(--surface2); border-radius:6px; padding:8px 10px; border-left:3px solid var(--accent);">' +
+      '<div style="display:flex; justify-content:space-between; margin-bottom:3px;">' +
+        '<span style="font-weight:600; font-size:11px; color:var(--text);">' + a.who + ' · ' + a.method + '</span>' +
+        '<span style="font-size:10px; color:var(--text-muted); font-family:DM Mono,monospace;">' + a.date + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px; color:var(--text-muted);">' + (a.memo || '메모 없음') + '</div>' +
+      (a.next ? '<div style="font-size:10px; color:var(--accent2); margin-top:3px;">→ 다음: ' + a.next + '</div>' : '') +
+      '<span class="status-pill s-' + a.status + '" style="margin-top:4px; display:inline-block;">' + a.status + '</span>' +
+    '</div>';
+  }).join('');
+
+  renderCustomerTable();
+  showToast('활동이 추가됐어요!');
 }
 
 function closeDetailModal() {
