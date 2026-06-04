@@ -1823,11 +1823,11 @@ async function runCollector() {
     document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (대형사 ${excluded}건 자동제외)`;
     document.getElementById('collectPageInfo').textContent = `1페이지 / 약 ${Math.ceil(totalCount/100)}페이지`;
     document.getElementById('addAllBtn').style.display = 'inline-block';
-    document.getElementById('corsGuide').style.display = 'none';
+    // corsGuide removed
     renderCollectTable();
   } catch(e) {
     console.error(e);
-    document.getElementById('corsGuide').style.display = 'block';
+    // corsGuide removed
     document.getElementById('collectTbody').innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--red); padding:20px;">⚠️ API 호출 실패: ${e.message}<br><span style="font-size:11px; color:var(--text-muted);">CORS 제한일 수 있어요. 하단 우회 가이드를 확인하세요.</span></td></tr>`;
     document.getElementById('collectCount').textContent = '실패';
   } finally {
@@ -1840,35 +1840,46 @@ async function runCollectorAll() {
   const loading = document.getElementById('loadingBar');
   loading.classList.add('active');
   collectResults = [];
+  allCollectResults = [];
   document.getElementById('collectTbody').innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">🔄 전체 페이지 수집 중...</td></tr>';
+  document.getElementById('collectCount').textContent = '수집 중...';
 
   try {
-    // 1페이지 먼저
     const first = await callWarehouseAPI(1);
     const total = parseInt(first?.response?.body?.totalCount || 0);
     const pages = Math.ceil(total / 100);
     const items1 = first?.response?.body?.items?.item || [];
     const arr1 = Array.isArray(items1) ? items1 : [items1];
-    collectResults = arr1.map(parseItem);
+    const parsed1 = arr1.map(parseItem).filter(Boolean);
+    collectResults.push(...parsed1);
+    document.getElementById('collectCount').textContent = `수집 중... 1/${pages}페이지 (${collectResults.length}건)`;
 
-    // 나머지 페이지
     for (let p = 2; p <= Math.min(pages, 10); p++) {
-      document.getElementById('collectCount').textContent = `수집 중... ${p}/${pages}페이지`;
-      const d = await callWarehouseAPI(p);
-      const its = d?.response?.body?.items?.item || [];
-      const arr = Array.isArray(its) ? its : [its];
-      const rawPage = arr.map(parseItem).filter(Boolean);
-      collectResults.push(...rawPage);
-      await new Promise(r => setTimeout(r, 200)); // rate limit
+      document.getElementById('collectCount').textContent = `수집 중... ${p}/${pages}페이지 (${collectResults.length}건)`;
+      try {
+        const d = await callWarehouseAPI(p);
+        const its = d?.response?.body?.items?.item || [];
+        const arr = Array.isArray(its) ? its : [its];
+        collectResults.push(...arr.map(parseItem).filter(Boolean));
+      } catch(pageErr) {
+        console.warn(`${p}페이지 오류:`, pageErr.message);
+      }
+      await new Promise(r => setTimeout(r, 300));
     }
 
-    allCollectResults = collectResults;
-    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (대형사 자동제외)`;
+    // 대형사 제외
+    const beforeExclude = collectResults.length;
+    collectResults = collectResults.filter(r => !EXCLUDE_KEYWORDS.some(k => r.name.includes(k)));
+    allCollectResults = [...collectResults];
+    const excluded = beforeExclude - collectResults.length;
+
+    document.getElementById('collectCount').textContent = `결과 ${collectResults.length}건 (대형사 ${excluded}건 자동제외)`;
     document.getElementById('addAllBtn').style.display = 'inline-block';
     renderCollectTable();
   } catch(e) {
-    document.getElementById('corsGuide').style.display = 'block';
+    console.error('전체수집 오류:', e);
     document.getElementById('collectTbody').innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--red); padding:20px;">⚠️ 오류: ${e.message}</td></tr>`;
+    document.getElementById('collectCount').textContent = '오류';
   } finally {
     loading.classList.remove('active');
   }
@@ -2071,7 +2082,7 @@ function initDate() {
   function dk(e) {
     return atob(atob(e));
   }
-  const ak = dk("TVdWaFkyUmtPVFJsWkRFME9URTJaR0kxT0dRek16bGpZemRqT0RObFkyUXdNR05sTkRWbVlXTXlOVFJoWVdRd01qRTBNelptTWpGaFpqWmxZV1k9");
+  const ak = dk("TVdWaFkyUmtPVFJsWkRFME9URTJaR0kxT0dRek16bGpZemRqTjJNNE0yVmpaREF3WTJVME5XWmhZekkxTkdGaFpEQXlNVFF6Tm1ZeU1XRm1ObVZoWmc9PQ==");
   const kk = dk("TVdVeVpXSTBabVkwWkRBNVpXSTNNakkxWXpKaU1qUXlNekU1TmpKbFlqaz0=");
   if (!localStorage.getItem('tf_api_key')) localStorage.setItem('tf_api_key', ak);
   if (!localStorage.getItem('kakao_app_key')) localStorage.setItem('kakao_app_key', kk);
