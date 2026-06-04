@@ -495,6 +495,125 @@
   .loading-bar.active { display: block; }
   @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
+  /* 모바일 상태 요약 탭 */
+  .mobile-status-tabs {
+    display: none;
+  }
+  .mst-bar {
+    display: flex;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .mst-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    cursor: pointer;
+    border-right: 1px solid var(--border);
+    transition: background 0.2s;
+    position: relative;
+  }
+  .mst-item:last-child { border-right: none; }
+  .mst-item.active { background: rgba(14,165,233,0.12); }
+  .mst-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+  .mst-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .mst-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .mst-미접촉 .mst-count { color: #94a3b8; }
+  .mst-접촉중 .mst-count { color: var(--accent2); }
+  .mst-협의중 .mst-count { color: var(--yellow); }
+  .mst-수주완료 .mst-count { color: var(--green); }
+
+  /* 모바일 압축 카드 */
+  .mobile-card-list {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .m-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+    border-left: 3px solid var(--border);
+  }
+  .m-card:active { background: var(--surface2); }
+  .m-card.s-미접촉-border { border-left-color: #475569; }
+  .m-card.s-접촉중-border { border-left-color: var(--accent); }
+  .m-card.s-협의중-border { border-left-color: var(--yellow); }
+  .m-card.s-수주완료-border { border-left-color: var(--green); }
+  .m-card-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .m-card-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .m-card-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .m-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .m-card-chip {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+  .m-card-chip + .m-card-chip::before {
+    content: '·';
+    margin-right: 6px;
+  }
+  .m-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .m-card-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+  .m-card-prob-상 { color: var(--green); font-size: 11px; font-weight: 700; }
+  .m-card-prob-중 { color: var(--yellow); font-size: 11px; font-weight: 700; }
+  .m-card-prob-하 { color: var(--text-muted); font-size: 11px; }
+
   @media (max-width: 768px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); gap:8px; }
     .grid-2 { grid-template-columns: 1fr; }
@@ -534,7 +653,13 @@
     .panel { padding: 12px; }
     .panel-title { font-size: 11px; }
 
-    /* 테이블 모바일 */
+    /* 고객사 목록 - 모바일에서 테이블 숨기고 카드 보이기 */
+    .mobile-status-tabs { display: block; }
+    .mobile-card-list { display: flex; }
+    #customerTable { display: none; }
+    .search-bar .btn { font-size: 11px; padding: 8px 12px; }
+
+    /* 테이블 모바일 (수집결과 등 다른 테이블용) */
     .data-table th, .data-table td { 
       padding: 8px 6px; 
       font-size: 11px;
@@ -671,6 +796,37 @@
     </select>
     <button class="btn btn-primary" onclick="openAddModal()">+ 고객사 추가</button>
   </div>
+
+  <!-- 모바일 전용: 상태별 요약 탭 -->
+  <div class="mobile-status-tabs">
+    <div class="mst-bar">
+      <div class="mst-item mst-전체 active" onclick="mobileFilterStatus('')">
+        <div class="mst-count" style="color:var(--text);" id="mst-cnt-전체">0</div>
+        <div class="mst-label">전체</div>
+      </div>
+      <div class="mst-item mst-미접촉" onclick="mobileFilterStatus('미접촉')">
+        <div class="mst-count" id="mst-cnt-미접촉">0</div>
+        <div class="mst-label">미접촉</div>
+      </div>
+      <div class="mst-item mst-접촉중" onclick="mobileFilterStatus('접촉중')">
+        <div class="mst-count" id="mst-cnt-접촉중">0</div>
+        <div class="mst-label">접촉중</div>
+      </div>
+      <div class="mst-item mst-협의중" onclick="mobileFilterStatus('협의중')">
+        <div class="mst-count" id="mst-cnt-협의중">0</div>
+        <div class="mst-label">협의중</div>
+      </div>
+      <div class="mst-item mst-수주완료" onclick="mobileFilterStatus('수주완료')">
+        <div class="mst-count" id="mst-cnt-수주완료">0</div>
+        <div class="mst-label">수주완료</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모바일 카드 리스트 -->
+  <div class="mobile-card-list" id="mobileCardList"></div>
+
+  <!-- 데스크탑 테이블 -->
   <div class="panel">
     <table class="data-table" id="customerTable">
       <thead>
@@ -1367,6 +1523,18 @@ function animateCount(id, target) {
 }
 
 // ── CUSTOMERS ──────────────────────────────────
+let mobileStatusFilter = '';
+
+function mobileFilterStatus(status) {
+  mobileStatusFilter = status;
+  document.querySelectorAll('.mst-item').forEach(el => el.classList.remove('active'));
+  const key = status || '전체';
+  const activeEl = document.querySelector('.mst-' + key);
+  if (activeEl) activeEl.classList.add('active');
+  document.getElementById('filterStatus').value = status;
+  renderCustomerTable();
+}
+
 function renderCustomerTable() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   const fs = document.getElementById('filterStatus').value;
@@ -1380,6 +1548,8 @@ function renderCustomerTable() {
   });
 
   const probClass = { '상':'prob-high', '중':'prob-mid', '하':'prob-low', '미평가':'prob-low' };
+
+  // ── 데스크탑 테이블 ──
   const tbody = document.getElementById('customerTbody');
   tbody.innerHTML = list.map(c => {
     const lastAct = activities.filter(a => a.company === c.name).sort((a,b) => b.ts - a.ts)[0];
@@ -1400,6 +1570,49 @@ function renderCustomerTable() {
     </tr>
     ${lastAct ? `<tr id="memo-row-${c.id}" style="display:none;"><td colspan="9" style="padding:0 10px 10px 40px; background:var(--surface2);"><div style="font-size:11px; color:var(--text-muted); padding:8px; border-left:3px solid var(--accent); border-radius:4px;">💬 최근메모: ${lastAct.memo||'없음'}</div></td></tr>` : ''}`;
   }).join('') || `<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:20px;">검색 결과가 없습니다.</td></tr>`;
+
+  // ── 모바일 상태 탭 카운트 ──
+  const statuses = ['미접촉','접촉중','협의중','수주완료'];
+  const baseList = customers.filter(c => {
+    const match = !q || c.name.toLowerCase().includes(q) || c.region.includes(q) || (c.tf||'').includes(q);
+    const regMatch = !fr || c.region === fr;
+    return match && regMatch;
+  });
+  const elAll = document.getElementById('mst-cnt-전체');
+  if (elAll) elAll.textContent = baseList.length;
+  statuses.forEach(s => {
+    const el = document.getElementById('mst-cnt-' + s);
+    if (el) el.textContent = baseList.filter(c => c.status === s).length;
+  });
+
+  // ── 모바일 카드 리스트 ──
+  const cardEl = document.getElementById('mobileCardList');
+  if (cardEl) {
+    const probColors = { '상':'m-card-prob-상', '중':'m-card-prob-중', '하':'m-card-prob-하', '미평가':'m-card-prob-하' };
+    cardEl.innerHTML = list.length ? list.map(c => {
+      const dateShort = c.lastContact ? c.lastContact.slice(5) : '-';
+      const volText = c.volume ? Number(c.volume).toLocaleString() + '박스/월' : '';
+      const churnBadge = c.churn === 'Y' ? ' <span style="color:var(--red);font-size:9px;">[이탈]</span>' : '';
+      return `<div class="m-card s-${c.status}-border" onclick="openDetailModal(${c.id})">
+        <div class="m-card-main">
+          <div class="m-card-top">
+            <div class="m-card-name">${c.name}${churnBadge}</div>
+            <span class="status-pill s-${c.status}" style="font-size:9px;padding:1px 7px;flex-shrink:0;">${c.status}</span>
+          </div>
+          <div class="m-card-meta">
+            <span class="m-card-chip">${c.region}</span>
+            <span class="m-card-chip">${c.tf||'미배정'}</span>
+            <span class="m-card-chip">${c.courier||'미확인'}</span>
+            ${volText ? `<span class="m-card-chip">${volText}</span>` : ''}
+          </div>
+        </div>
+        <div class="m-card-right">
+          <span class="${probColors[c.prob]||'m-card-prob-하'}">${c.prob||'-'}</span>
+          <span class="m-card-date">${dateShort}</span>
+        </div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:30px;">검색 결과가 없습니다.</div>';
+  }
 
   // update activity company select
   const sel = document.getElementById('act-company');
