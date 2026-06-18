@@ -1895,14 +1895,14 @@ function initKakaoMap() {
 function plotCustomers() {
   if (!kakaoMap || !kakaoGeocoder) return;
 
+  // 기존 마커 제거
   kakaoMarkers.forEach(m => m.setMap(null));
   kakaoMarkers = [];
 
   const targets = customers.filter(c => c.addr && c.addr !== '-' && c.addr !== '');
   document.getElementById('mapPinCount').textContent = `총 ${targets.length}개 핀`;
 
-  let openInfoWindow = null;
-
+  // 지도 클릭 → 주소 역지오코딩 → 현장등록 폼 자동입력
   kakao.maps.event.removeListener(kakaoMap, 'click');
   kakao.maps.event.addListener(kakaoMap, 'click', (mouseEvent) => {
     const latlng = mouseEvent.latLng;
@@ -1924,27 +1924,78 @@ function plotCustomers() {
       const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
       const color = STATUS_COLORS[c.status] || '#0ea5e9';
 
-      const content = document.createElement('div');
-      content.style.cssText = `
-        position:relative;
-        cursor:pointer;
-        user-select:none;
-        transform:translate(-50%, -100%);
-      `;
-      content.innerHTML = `
-        <div style="font-size:32px; line-height:32px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));">📍</div>
-        <div style="position:absolute; left:50%; bottom:2px; transform:translateX(-50%); width:9px; height:9px; border-radius:50%; background:${color}; border:1.5px solid #fff;"></div>
-      `;
+const markerContent = `
+<div style="
+    position:relative;
+    width:34px;
+    height:46px;
+    cursor:pointer;
+">
 
-      const overlay = new kakao.maps.CustomOverlay({
-        content: content,
-        map: kakaoMap,
-        position: coords,
-        yAnchor: 1,
-        clickable: true
-      });
-      kakaoMarkers.push(overlay);
+    <!-- 그림자 -->
+    <div style="
+        position:absolute;
+        bottom:2px;
+        left:50%;
+        transform:translateX(-50%);
+        width:14px;
+        height:6px;
+        background:rgba(0,0,0,.22);
+        border-radius:50%;
+        filter:blur(2px);
+    "></div>
 
+    <!-- 핀 -->
+    <div style="
+        position:absolute;
+        top:0;
+        left:3px;
+
+        width:28px;
+        height:28px;
+
+        background:${color};
+
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+
+        border:3px solid #fff;
+
+        box-shadow:
+            0 4px 12px rgba(0,0,0,.28),
+            inset 0 2px 3px rgba(255,255,255,.35);
+    ">
+    </div>
+
+    <!-- 중앙 흰색 포인트 -->
+    <div style="
+        position:absolute;
+        top:11px;
+        left:14px;
+
+        width:10px;
+        height:10px;
+
+        background:#fff;
+        border-radius:50%;
+
+        box-shadow:
+            0 0 8px rgba(255,255,255,.9);
+    ">
+    </div>
+
+</div>
+`;
+
+const marker = new kakao.maps.CustomOverlay({
+    position: coords,
+    content: markerContent,
+    yAnchor: 1.35
+});
+      marker.setMap(kakaoMap);
+      kakaoMarkers.push(marker);
+
+      // 인포윈도우
       const infoContent = `
         <div style="padding:10px; font-family:'Noto Sans KR',sans-serif; min-width:180px;">
           <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${c.name}</div>
@@ -1956,10 +2007,8 @@ function plotCustomers() {
 
       const infoWindow = new kakao.maps.InfoWindow({ content: infoContent, removable: true });
 
-      content.addEventListener('click', () => {
-        if (openInfoWindow) openInfoWindow.close();
-        infoWindow.open(kakaoMap, overlay);
-        openInfoWindow = infoWindow;
+      kakao.maps.event.addListener(marker, 'click', () => {
+        infoWindow.open(kakaoMap, { getPosition: () => coords });
       });
     });
   });
