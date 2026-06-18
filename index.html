@@ -1935,9 +1935,9 @@ const markerContent = `
 </div>
 `;
 
-new kakao.maps.CustomOverlay({
+const overlay = new kakao.maps.CustomOverlay({
   content: markerContent,
-  map: map,
+  map: kakaoMap,
   position: position
 });
 
@@ -1953,8 +1953,8 @@ new kakao.maps.CustomOverlay({
 
       const infoWindow = new kakao.maps.InfoWindow({ content: infoContent, removable: true });
 
-      kakao.maps.event.addListener(marker, 'click', () => {
-        infoWindow.open(kakaoMap, { getPosition: () => coords });
+      kakao.maps.event.addListener(overlay, 'click', () => {
+        infoWindow.open(kakaoMap, overlay);
       });
     });
   });
