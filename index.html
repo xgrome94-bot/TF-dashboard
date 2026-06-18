@@ -1939,31 +1939,48 @@ const markerContent = `
 📍
 </div>
 `;
+targets.forEach(c => {
+  kakaoGeocoder.addressSearch(c.addr, (result, status) => {
+    if (status !== kakao.maps.services.Status.OK) return;
 
-new kakao.maps.CustomOverlay({
-  content: markerContent,
-  map: map,
-  position: position
-});
+    const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+    const color = STATUS_COLORS[c.status] || '#0ea5e9';
 
-      // 인포윈도우
-      const infoContent = `
-        <div style="padding:10px; font-family:'Noto Sans KR',sans-serif; min-width:180px;">
-          <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${c.name}</div>
-          <div style="font-size:11px; color:#666; margin-bottom:2px;">📍 ${c.addr}</div>
-          <div style="font-size:11px; color:#666; margin-bottom:2px;">📞 ${c.tel || '-'}</div>
-          <div style="font-size:11px; margin-bottom:2px;">상태: <b style="color:${color}">${c.status}</b></div>
-          <div style="font-size:11px; color:#666;">담당: ${c.tf || '-'}</div>
-        </div>`;
+    const el = document.createElement('div');
+    el.style.cssText = `
+      width:26px; height:26px;
+      border-radius:50% 50% 50% 0;
+      background:${color};
+      transform: rotate(-45deg);
+      border:2px solid #fff;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      cursor:pointer;
+    `;
 
-      const infoWindow = new kakao.maps.InfoWindow({ content: infoContent, removable: true });
+    const overlay = new kakao.maps.CustomOverlay({
+      content: el,
+      map: kakaoMap,
+      position: coords,
+      yAnchor: 1
+    });
+    kakaoMarkers.push(overlay);
 
-      kakao.maps.event.addListener(marker, 'click', () => {
-        infoWindow.open(kakaoMap, { getPosition: () => coords });
-      });
+    const infoContent = `
+      <div style="padding:10px; font-family:'Noto Sans KR',sans-serif; min-width:180px;">
+        <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${c.name}</div>
+        <div style="font-size:11px; color:#666; margin-bottom:2px;">📍 ${c.addr}</div>
+        <div style="font-size:11px; color:#666; margin-bottom:2px;">📞 ${c.tel || '-'}</div>
+        <div style="font-size:11px; margin-bottom:2px;">상태: <b style="color:${color}">${c.status}</b></div>
+        <div style="font-size:11px; color:#666;">담당: ${c.tf || '-'}</div>
+      </div>`;
+
+    const infoWindow = new kakao.maps.InfoWindow({ content: infoContent, removable: true });
+
+    el.addEventListener('click', () => {
+      infoWindow.open(kakaoMap, { getPosition: () => coords });
     });
   });
-}
+});
 
 function saveFieldCustomer() {
   const name = document.getElementById('field-name').value.trim();
