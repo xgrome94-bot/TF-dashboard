@@ -1895,14 +1895,14 @@ function initKakaoMap() {
 function plotCustomers() {
   if (!kakaoMap || !kakaoGeocoder) return;
 
-  // 기존 마커 제거
   kakaoMarkers.forEach(m => m.setMap(null));
   kakaoMarkers = [];
 
   const targets = customers.filter(c => c.addr && c.addr !== '-' && c.addr !== '');
   document.getElementById('mapPinCount').textContent = `총 ${targets.length}개 핀`;
 
-  // 지도 클릭 → 주소 역지오코딩 → 현장등록 폼 자동입력
+  let openInfoWindow = null;
+
   kakao.maps.event.removeListener(kakaoMap, 'click');
   kakao.maps.event.addListener(kakaoMap, 'click', (mouseEvent) => {
     const latlng = mouseEvent.latLng;
@@ -1924,24 +1924,27 @@ function plotCustomers() {
       const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
       const color = STATUS_COLORS[c.status] || '#0ea5e9';
 
-const markerContent = `
-<div style="
-    font-size:40px;
-    line-height:40px;
-    cursor:pointer;
-    user-select:none;
-">
-📍
-</div>
-`;
+      const content = document.createElement('div');
+      content.style.cssText = `
+        position:relative;
+        cursor:pointer;
+        user-select:none;
+        transform:translate(-50%, -100%);
+      `;
+      content.innerHTML = `
+        <div style="font-size:32px; line-height:32px; filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));">📍</div>
+        <div style="position:absolute; left:50%; bottom:2px; transform:translateX(-50%); width:9px; height:9px; border-radius:50%; background:${color}; border:1.5px solid #fff;"></div>
+      `;
 
-const overlay = new kakao.maps.CustomOverlay({
-  content: markerContent,
-  map: kakaoMap,
-  position: position
-});
+      const overlay = new kakao.maps.CustomOverlay({
+        content: content,
+        map: kakaoMap,
+        position: coords,
+        yAnchor: 1,
+        clickable: true
+      });
+      kakaoMarkers.push(overlay);
 
-      // 인포윈도우
       const infoContent = `
         <div style="padding:10px; font-family:'Noto Sans KR',sans-serif; min-width:180px;">
           <div style="font-weight:700; font-size:13px; margin-bottom:4px;">${c.name}</div>
@@ -1953,8 +1956,10 @@ const overlay = new kakao.maps.CustomOverlay({
 
       const infoWindow = new kakao.maps.InfoWindow({ content: infoContent, removable: true });
 
-      kakao.maps.event.addListener(overlay, 'click', () => {
+      content.addEventListener('click', () => {
+        if (openInfoWindow) openInfoWindow.close();
         infoWindow.open(kakaoMap, overlay);
+        openInfoWindow = infoWindow;
       });
     });
   });
