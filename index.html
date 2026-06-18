@@ -1935,13 +1935,11 @@ const markerContent = `
 </div>
 `;
 
-const marker = new kakao.maps.CustomOverlay({
-    position: coords,
-    content: markerContent,
-    yAnchor: 1.35
+new kakao.maps.CustomOverlay({
+  content: markerContent,
+  map: map,
+  position: position
 });
-      marker.setMap(kakaoMap);
-      kakaoMarkers.push(marker);
 
       // 인포윈도우
       const infoContent = `
