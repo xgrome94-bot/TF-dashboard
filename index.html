@@ -1987,10 +1987,10 @@ const markerContent = `
 `;
 
       const marker = new kakao.maps.CustomOverlay({
-        position: coords,
-        content: markerContent,
-        yAnchor: 1,
-      });
+  position: coords,
+  content: markerContent,
+  yAnchor: 1.25,
+});
       marker.setMap(kakaoMap);
       kakaoMarkers.push(marker);
 
